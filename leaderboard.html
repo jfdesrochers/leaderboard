@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="ECP Leaderboard">
+        <meta name="author" content="Jean-Francois Desrochers">
+        <title>Nos TOP Vendeurs</title>
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+        <link href="/assets/leaderboard.css" rel="stylesheet">
+        <style type="text/css">
+            
+        </style>
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="top-banner">
+                <h1>Nos <span class="splash">TOP</span> Vendeurs</h1>
+                <div class="rules">
+
+                </div>
+            </div>
+            <table id="leaderboard" class="leaderboard">
+
+            </table>
+        </div>
+        <!-- Bootstrap core JavaScript
+        ================================================ -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="//unpkg.com/mithril/mithril.min.js"></script>
+        <script src='//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js'></script>
+
+        <script type="text/javascript">
+            function floatRound(number, precision) {
+                var factor = Math.pow(10, precision);
+                return Math.round(number * factor) / factor;
+            }
+            
+            function getParameterByName(name, url) {
+                if (!url) url = window.location.href;
+                name = name.replace(/[\[\]]/g, "\\$&");
+                var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                    results = regex.exec(url);
+                if (!results) return null;
+                if (!results[2]) return '';
+                return decodeURIComponent(results[2].replace(/\+/g, " "));
+            }
+
+            var storeno = getParameterByName('storeno') || '139'
+            var itemsPerPage = Math.ceil(window.innerHeight * 7 / 720);
+            var pageCount = 0;
+            var curPage = 0;
+
+            window.onresize = function () {
+                itemsPerPage = Math.ceil(window.innerHeight * 7 / 720);
+                pageCount = Math.ceil(lbdata.data.length / itemsPerPage);
+                curPage = 0;
+                m.redraw();
+            }
+
+            var lbdata = {}
+            var updateData = function () {
+                m.request('/getdata?storeno=' + storeno).then(function (data) {
+                    data.data = data.data.sort((a, b) => {
+                        return parseInt(a[13]) - parseInt(b[13])
+                    })
+                    pageCount = Math.ceil(data.data.length / itemsPerPage)
+                    curPage = 0
+                    lbdata = data
+                }).catch(function (err) {
+                    console.error(err)
+                })
+            }
+
+            var Leaderboard = {}
+
+            Leaderboard.oninit = function () {
+                updateData()
+            }
+
+            Leaderboard.view = function () {
+                return lbdata.lastUpdate ? [
+                    m('tr', [
+                        m('td.associate', {style: 'text-align: left;', colspan: '2'}, 'Magasin: ' + lbdata.storeno),    
+                        m('td.psf', {style: 'color: red; text-align: right;', colspan: '7'}, 'Mise à jour: ' + new Date(lbdata.lastUpdate).toLocaleString())
+                    ]),
+                    lbdata.data.filter(function (o, i) {
+                        return Math.floor(i / itemsPerPage) === curPage
+                    }).map(function (o, i) {
+                        return m('tr', {key: i}, [
+                            m('td.rank', (curPage*itemsPerPage)+(i+1)),
+                            m('td.associate', o[1].firstname + ' ' + o[1].lastname[0] + '.'),
+                            m('td.psf', [Math.round(o[2]), m('br'), m('span.title', '$ VENTES')]),
+                            m('td.psf', [Math.round(o[6]), m('br'), m('span.title', '$ TECH')]),
+                            m('td.psf', [Math.round(o[7]), m('br'), m('span.title', 'QTÉ PLANS')]),
+                            m('td.psf', [floatRound(o[8], 1), m('br'), m('span.title', '% PLANS')]),
+                            m('td.psf', [floatRound(o[9], 2), m('br'), m('span.title', 'CLASS ATTACH')]),
+                            m('td.psf', [floatRound(o[11], 2), m('br'), m('span.title', '% COURRIELS')]),
+                            m('td.psf', [floatRound(o[12], 1), m('br'), m('span.title', '% POD')])
+                        ])
+                    })
+                ] : []
+            }
+
+            m.mount(document.getElementById('leaderboard'), Leaderboard)
+        </script>
+
+        <script type='text/javascript'>
+
+            function loadLB()
+            {
+                updateData()
+            }
+
+            const zfill = function (s, size) {
+                while (s.length < size) s = "0" + s
+                return s
+            }
+
+            document.body.style.padding = (16 * (getParameterByName('overscan') || 0)) + 'px';
+
+            window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+            castReceiverManager.onReady = function(event) {
+                window.castReceiverManager.setApplicationState('Dashboard ready...');
+            };
+            var ns = 'urn:x-cast:com.jfdft.dashboard';
+            window.messageBus = window.castReceiverManager.getCastMessageBus(ns);
+            window.messageBus.onMessage = function(e) {
+                var msg = JSON.parse(e.data);
+                window.messageBus.send(e.senderId, 'ok');
+            };
+            window.castReceiverManager.start({statusText: 'Dashboard starting...'});
+
+            setInterval(loadLB, 300000);
+            loadLB();
+
+            var k = 1;
+            var preloader = new Image();
+            preloader.src = "/img/bg" + zfill(String(k), 3) + ".jpg";
+            setInterval(function() { 
+                document.body.style.background = "url(/img/bg" + zfill(String(k), 3) + ".jpg" + ") no-repeat center center fixed";
+                document.body.style.backgroundSize = "cover";
+                if ((k + 1) === 694) {
+                    k = 0;
+                } else {
+                    k++;
+                    preloader.src = "/img/bg" + zfill(String(k), 3) + ".jpg";
+                }			
+            }, 60000)
+            setInterval(function () {
+                if (pageCount === 0) {return}
+                curPage++
+                if (curPage >= pageCount) {curPage = 0}
+                m.redraw()
+            }, 30000)
+        </script>
+    </body>
+</html>
