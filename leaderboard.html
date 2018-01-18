@@ -62,12 +62,14 @@
             var lbdata = {}
             var updateData = function () {
                 m.request('/getdata?storeno=' + storeno).then(function (data) {
-                    data.data = data.data.sort((a, b) => {
-                        return parseInt(a[13]) - parseInt(b[13])
-                    })
-                    pageCount = Math.ceil(data.data.length / itemsPerPage)
-                    curPage = 0
-                    lbdata = data
+                    if (data.lastUpdate !== lbdata.lastUpdate) {
+                        data.data = data.data.sort((a, b) => {
+                            return parseInt(a[13]) - parseInt(b[13])
+                        })
+                        pageCount = Math.ceil(data.data.length / itemsPerPage)
+                        curPage = 0
+                        lbdata = data
+                    }
                 }).catch(function (err) {
                     console.error(err)
                 })
