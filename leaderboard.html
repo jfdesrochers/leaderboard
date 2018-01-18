@@ -48,16 +48,16 @@
             }
 
             var storeno = getParameterByName('storeno') || '139'
-            var itemsPerPage = Math.ceil(window.innerHeight * 7 / 720);
+            var itemsPerPage = 7;//Math.ceil(window.innerHeight * 7 / 720);
             var pageCount = 0;
             var curPage = 0;
 
-            window.onresize = function () {
+            /*window.onresize = function () {
                 itemsPerPage = Math.ceil(window.innerHeight * 7 / 720);
                 pageCount = Math.ceil(lbdata.data.length / itemsPerPage);
                 curPage = 0;
                 m.redraw();
-            }
+            }*/
 
             var lbdata = {}
             var updateData = function () {
