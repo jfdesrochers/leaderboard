@@ -98,7 +98,7 @@
                             m('td.psf', [Math.round(o[7]), m('br'), m('span.title', 'QTÉ PLANS')]),
                             m('td.psf', [floatRound(o[8], 1), m('br'), m('span.title', '% PLANS')]),
                             m('td.psf', [floatRound(o[9], 2), m('br'), m('span.title', 'CLASS ATTACH')]),
-                            m('td.psf', [floatRound(o[11], 2) * 100, m('br'), m('span.title', '% COURRIELS')]),
+                            m('td.psf', [floatRound(parseFloat(o[11]) * 100, 1), m('br'), m('span.title', '% COURRIELS')]),
                             m('td.psf', [floatRound(o[12], 1), m('br'), m('span.title', '% POD')])
                         ])
                     })
