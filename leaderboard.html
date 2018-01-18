@@ -120,19 +120,19 @@
                 return s
             }
 
-            document.body.style.padding = (16 * (getParameterByName('overscan') || 0)) + 'px';
-
-            window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
-            castReceiverManager.onReady = function(event) {
-                window.castReceiverManager.setApplicationState('Dashboard ready...');
-            };
-            var ns = 'urn:x-cast:com.jfdft.dashboard';
-            window.messageBus = window.castReceiverManager.getCastMessageBus(ns);
-            window.messageBus.onMessage = function(e) {
-                var msg = JSON.parse(e.data);
-                window.messageBus.send(e.senderId, 'ok');
-            };
-            window.castReceiverManager.start({statusText: 'Dashboard starting...'});
+            if (getParameterByName('castapp') === 'yes') {
+                window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+                castReceiverManager.onReady = function(event) {
+                    window.castReceiverManager.setApplicationState('Dashboard ready...');
+                };
+                var ns = 'urn:x-cast:com.jfdft.dashboard';
+                window.messageBus = window.castReceiverManager.getCastMessageBus(ns);
+                window.messageBus.onMessage = function(e) {
+                    var msg = JSON.parse(e.data);
+                    window.messageBus.send(e.senderId, 'ok');
+                };
+                window.castReceiverManager.start({statusText: 'Dashboard starting...'});
+            }
 
             setInterval(loadLB, 300000);
             loadLB();
