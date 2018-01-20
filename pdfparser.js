@@ -86,7 +86,8 @@ const parsePDF = function (pdfBuffer) {
         const getRank = function (result, data, index) {
             let sorted = data.sort((a, b) => b[index] - a[index])
             let rank = 0
-            while (rank < sorted.length && sorted[index] !== result) {
+            console.log(result, sorted[rank][index])
+            while (rank < sorted.length && sorted[rank][index] !== result) {
                 rank++
             }
             return rank + 1
@@ -98,7 +99,7 @@ const parsePDF = function (pdfBuffer) {
                 // Since results in a section can bleed to multiple pages, we need to get creative. Fortunately, each section is bookended by titles over a purple fill.
                 // We'll be using that to detect and collect all the data on a section.
                 let page = getPageData(pdfData['formImage']['Pages'], false) // "Section 1" contains all the juicy week-to-date stuff
-                let table = page.map((row, i) => {
+                let table = page.map((row) => {
                     // Now we keep only the columns we want and clean them up.
                     row = [
                         row[1], // Associate Number (0)
@@ -115,14 +116,17 @@ const parsePDF = function (pdfBuffer) {
                         CleanUp.float(row[15]), // Email Attach % (11)
                         CleanUp.float(row[16]) // POD Attach % (12)
                     ]
-                    let salesRank = getRank(row[2], page, 6)
-                    let atvRank = getRank(row[3], page, 7)
-                    let pieceCountRank = getRank(row[4], page, 8)
-                    let techRank = getRank(row[4], page, 8)
-                    let ecpRank = getRank(row[7], page, 11)
-                    let classRank = getRank(row[9], page, 13)
-                    let emailRank = getRank(row[11], page, 15)
-                    let podRank = getRank(row[12], page, 16)
+                    return row;
+                });
+                table = table.map((row) => {
+                    let salesRank = getRank(row[2], table, 2)
+                    let atvRank = getRank(row[3], table, 3)
+                    let pieceCountRank = getRank(row[4], table, 4)
+                    let techRank = getRank(row[6], table, 6)
+                    let ecpRank = getRank(row[7], table, 7)
+                    let classRank = getRank(row[9], table, 9)
+                    let emailRank = getRank(row[11], table, 11)
+                    let podRank = getRank(row[12], table, 12)
                     row = row.concat([
                         salesRank, // 13
                         atvRank, // 14
@@ -135,7 +139,7 @@ const parsePDF = function (pdfBuffer) {
                         (salesRank + atvRank + pieceCountRank + techRank + ecpRank + classRank + emailRank + podRank) / 8 // Overall Rank (21)
                     ])
                     return row;
-                });
+                })
                 resolve(table);
             } catch (err) {
                 console.error(err);
