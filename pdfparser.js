@@ -84,9 +84,9 @@ const parsePDF = function (pdfBuffer) {
         }
 
         const getRank = function (result, data, index) {
-            let sorted = data.sort((a, b) => b[index] - a[index])
+            let sorted = [].concat(data)
+            sorted.sort((a, b) => b[index] - a[index])
             let rank = 0
-            console.log(result, sorted[rank][index])
             while (rank < sorted.length && sorted[rank][index] !== result) {
                 rank++
             }
