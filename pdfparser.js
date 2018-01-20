@@ -83,14 +83,22 @@ const parsePDF = function (pdfBuffer) {
             return pageData
         }
 
+        const getRank = function (result, data, index) {
+            let sorted = data.sort((a, b) => b[index] - a[index])
+            let rank = 0
+            while (rank < sorted.length && sorted[index] !== result) {
+                rank++
+            }
+            return rank + 1
+        }
+
         pdfParser.on("pdfParser_dataError", errData => reject(errData.parserError) );
         pdfParser.on("pdfParser_dataReady", pdfData => {
             try {
                 // Since results in a section can bleed to multiple pages, we need to get creative. Fortunately, each section is bookended by titles over a purple fill.
                 // We'll be using that to detect and collect all the data on a section.
-                let page1 = getPageData(pdfData['formImage']['Pages'], false) // "Page 1" contains all the juicy week-to-date stuff
-                let page2 = getPageData(pdfData['formImage']['Pages'].slice(1), true) // "Page 2" contains all rankings -- we remove the first page to allow the process to find the second section
-                let table = page1.map((row, i) => {
+                let page = getPageData(pdfData['formImage']['Pages'], false) // "Section 1" contains all the juicy week-to-date stuff
+                let table = page.map((row, i) => {
                     // Now we keep only the columns we want and clean them up.
                     row = [
                         row[1], // Associate Number (0)
@@ -105,14 +113,27 @@ const parsePDF = function (pdfBuffer) {
                         CleanUp.float(row[13]), // Class Attach (9)
                         CleanUp.float(row[14]), // Airmiles Attach % (10)
                         CleanUp.float(row[15]), // Email Attach % (11)
-                        CleanUp.float(row[16]), // POD Attach % (12)
-                        CleanUp.float(page2[i][6]), // Overall Rank (13)
-                        CleanUp.float(page2[i][8]), // Sales Rank (14)
-                        CleanUp.float(page2[i][10]), // ATV Rank (15)
-                        CleanUp.float(page2[i][12]), // Piece Count Rank (16)
-                        CleanUp.float(page2[i][14]), // ECP Rank (17)
-                        CleanUp.float(page2[i][16]) // Class Attach Rank (18)
+                        CleanUp.float(row[16]) // POD Attach % (12)
                     ]
+                    let salesRank = getRank(row[2], page, 6)
+                    let atvRank = getRank(row[3], page, 7)
+                    let pieceCountRank = getRank(row[4], page, 8)
+                    let techRank = getRank(row[4], page, 8)
+                    let ecpRank = getRank(row[7], page, 11)
+                    let classRank = getRank(row[9], page, 13)
+                    let emailRank = getRank(row[11], page, 15)
+                    let podRank = getRank(row[12], page, 16)
+                    row = row.concat([
+                        salesRank, // 13
+                        atvRank, // 14
+                        pieceCountRank, // 15
+                        techRank, // 16
+                        ecpRank, // 17
+                        classRank, // 18
+                        emailRank, // 19
+                        podRank, // 20
+                        (salesRank + atvRank + pieceCountRank + techRank + ecpRank + classRank + emailRank + podRank) / 8 // Overall Rank (21)
+                    ])
                     return row;
                 });
                 resolve(table);
